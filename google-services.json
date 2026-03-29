@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "545667606654",
+    "project_id": "getrad-e4944",
+    "storage_bucket": "getrad-e4944.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545667606654:android:69e65441f43ee7a354102f",
+        "android_client_info": {
+          "package_name": "com.getrad.getradapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzSl9C8WNuD5I815tNSYy6ogKCTBkveqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

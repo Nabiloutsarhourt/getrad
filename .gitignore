@@ -31,7 +31,15 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.local
 .env*.local
+
+# Firebase credentials iOS (ne jamais committer)
+GoogleService-Info.plist
+
+# Windows shell artifacts
+nul
 
 # typescript
 *.tsbuildinfo
