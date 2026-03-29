@@ -1,0 +1,57 @@
+{
+  "cli": {
+    "version": ">= 10.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBzSl9C8WNuD5I815tNSYy6ogKCTBkveqc",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "getrad-e4944.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "getrad-e4944",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "getrad-e4944.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "545667606654",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:545667606654:web:ad64449e1e46125054102f"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBzSl9C8WNuD5I815tNSYy6ogKCTBkveqc",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "getrad-e4944.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "getrad-e4944",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "getrad-e4944.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "545667606654",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:545667606654:web:ad64449e1e46125054102f"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBzSl9C8WNuD5I815tNSYy6ogKCTBkveqc",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "getrad-e4944.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "getrad-e4944",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "getrad-e4944.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "545667606654",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:545667606654:web:ad64449e1e46125054102f"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "internal"
+      }
+    }
+  }
+}

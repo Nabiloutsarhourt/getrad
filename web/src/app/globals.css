@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #004ac6;
+  --primary-dark: #003a9e;
+  --secondary: #006c49;
+  --surface: #f8f9fa;
+  --on-surface: #191c1d;
+  --on-surface-variant: #434655;
+  --outline: #737686;
+  --outline-variant: #c3c6d7;
+  --danger: #ba1a1a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c3c6d7;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #737686;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+a, button {
+  transition: all 0.15s ease;
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25, 28, 29, 0.10);
+}
+
+/* Pulse animation for searching status */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Chat bubble styles */
+.message-bubble-own {
+  background-color: var(--primary);
+  color: white;
+  border-radius: 18px 18px 4px 18px;
+}
+.message-bubble-other {
+  background-color: #e7e8e9;
+  color: var(--on-surface);
+  border-radius: 18px 18px 18px 4px;
+}

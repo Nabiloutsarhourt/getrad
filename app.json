@@ -12,7 +12,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "com.getrad.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,10 +22,36 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "googleServicesFile": "./google-services.json",
+      "package": "com.getrad.getradapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1565C0",
+          "defaultChannel": "default",
+          "androidMode": "default"
+        }
+      ]
+    ],
+    "scheme": "getrad",
+    "extra": {
+      "eas": {
+        "projectId": "48bc7032-c1e2-4dc6-93aa-2cdfb1bd450b"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/48bc7032-c1e2-4dc6-93aa-2cdfb1bd450b"
     }
   }
 }

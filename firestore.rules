@@ -1,0 +1,184 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return getUserData().role == 'admin';
+    }
+
+    function isClient() {
+      return getUserData().role == 'client';
+    }
+
+    function isInterpreter() {
+      return getUserData().role == 'interpreter';
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(uid);
+      allow update: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow delete: if false;
+    }
+
+    // ── Interpreters (profils publics) ──────────────────────────────────────
+    match /interpreters/{uid} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isOwner(uid) || isAdmin());
+
+      // Sous-collection privée — inaccessible directement (Cloud Functions Admin SDK only)
+      match /private/{document} {
+        allow read, write: if false;
+      }
+    }
+
+    // ── Verifications ────────────────────────────────────────────────────────
+    match /verifications/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(uid);
+      allow update: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow delete: if false;
+    }
+
+    // ── Subscriptions (privé — propriétaire + admin) ──────────────────────
+    match /subscriptions/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      // Écritures uniquement via Cloud Functions (Admin SDK)
+      allow write: if false;
+    }
+
+    // ── Missions ────────────────────────────────────────────────────────────
+    match /missions/{missionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.currentOfferedTo == request.auth.uid ||
+        resource.data.assignedTo == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isAuthenticated() && isClient() &&
+        request.resource.data.clientId == request.auth.uid;
+
+      // Client : peut seulement annuler sa propre mission (status → 'cancelled')
+      // Les Cloud Functions utilisent l'Admin SDK et contournent ces règles
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.clientId == request.auth.uid &&
+         request.resource.data.status == 'cancelled' &&
+         resource.data.status in ['searching', 'offered', 'accepted'] &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'updatedAt']))
+      );
+
+      allow delete: if false;
+    }
+
+    // ── Availability Requests (demandes de disponibilité) ─────────────────
+    match /availabilityRequests/{requestId} {
+      // Le client qui a créé la demande et l'interprète concerné peuvent lire
+      allow read: if isAuthenticated() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.interpreterId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Seul le client authentifié peut créer une demande le concernant
+      allow create: if isAuthenticated() && isClient() &&
+        request.resource.data.clientId == request.auth.uid;
+
+      // Le client peut annuler sa propre demande (status → 'cancelled')
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.clientId == request.auth.uid &&
+         request.resource.data.status == 'cancelled' &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status']))
+      );
+      // Les réponses (accepted/refused/expired) sont traitées uniquement via Cloud Functions
+
+      allow delete: if false;
+    }
+
+    // ── Conversations ────────────────────────────────────────────────────────
+    match /conversations/{conversationId} {
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.participants;
+
+      allow create: if isAuthenticated() &&
+        request.auth.uid in request.resource.data.participants;
+
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.participants;
+
+      allow delete: if false;
+
+      // Messages (sous-collection)
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+
+        allow create: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants &&
+          request.resource.data.senderId == request.auth.uid;
+
+        allow update, delete: if false;
+      }
+    }
+
+    // ── Bookings ─────────────────────────────────────────────────────────────
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.interpreterId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isAuthenticated() && isClient() &&
+        request.resource.data.clientId == request.auth.uid;
+
+      // Client : annulation seulement (pending/confirmed → cancelled)
+      // Interprète : confirmer, refuser, terminer, ou annuler une réservation confirmée
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.clientId == request.auth.uid &&
+         request.resource.data.status == 'cancelled' &&
+         resource.data.status in ['pending', 'confirmed'] &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'cancelReason', 'cancelledAt', 'updatedAt'])) ||
+        (resource.data.interpreterId == request.auth.uid &&
+         request.resource.data.status in ['confirmed', 'rejected', 'completed', 'cancelled'] &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'confirmedAt', 'rejectedAt', 'rejectReason',
+                     'completedAt', 'cancelledAt', 'cancelReason', 'updatedAt']))
+      );
+
+      allow delete: if false;
+    }
+
+    // ── Reviews ──────────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() && isClient() &&
+        request.resource.data.clientId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+  }
+}

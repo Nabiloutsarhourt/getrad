@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper : vérifie le rôle admin via Firestore
+    function isAdmin() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Photos de profil — l'utilisateur ne peut modifier que son propre dossier
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Documents interprètes (CV, Kbis, identité)
+    // Lecture : interprète propriétaire + admin uniquement (données personnelles sensibles)
+    // Écriture : PDF ou image seulement (pas d'exécutables)
+    match /interpreters/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024
+                   && (request.resource.contentType.matches('application/pdf')
+                       || request.resource.contentType.matches('image/.*'));
+    }
+  }
+}
