@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, User, Briefcase, ChevronLeft } from 'lucide-react';
 import { registerWithEmail } from '../../../services/authService';
+import { trackSignUp } from '../../../lib/analytics';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
@@ -70,6 +71,7 @@ export default function RegisterPage() {
       });
 
       if (result.success) {
+        trackSignUp(role);
         router.push('/phone-verify');
       } else {
         setError(result.error || 'Erreur lors de l\'inscription');

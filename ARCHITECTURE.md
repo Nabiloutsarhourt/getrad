@@ -15,6 +15,9 @@
 | Navigation | React Navigation 7 (Stack + Bottom Tabs) |
 | Builds | EAS Build (dev APK, preview APK, production AAB) |
 | OTA updates | EAS Update (`eas update --branch production`) |
+| Analytics (mobile) | `@react-native-firebase/analytics` |
+| Analytics (web) | Firebase Analytics JS SDK (SSR-safe, `isSupported()`) |
+| App Web | Next.js 15 App Router (`web/`) — espace admin + espace interprète web |
 
 ---
 
@@ -79,13 +82,14 @@ getrad/
 │   │   ├── profileService.js       # updateUserProfile, updateInterpreterProfile, uploadProfileImage
 │   │   ├── bookingService.js       # CRUD bookings, confirmBooking, rejectBooking, completeBooking
 │   │   ├── reviewService.js        # createReview, getInterpreterReviews
-│   │   ├── searchService.js        # searchInterpreters (filtres langues, spécialités, région, ville)
+│   │   ├── searchService.js        # searchInterpreters, getInterpreterById, getInterpretersByIds
 │   │   ├── missionService.js       # createMission, subscribeMission, cancelMission, respondToOffer
 │   │   ├── messageService.js       # getOrCreateConversation, subscribeToMessages, sendMessage
 │   │   ├── verificationService.js  # submitVerification, uploadVerificationDocument
 │   │   ├── subscriptionService.js  # subscribeToSubscription, openCustomerPortal, PLAN_LABELS
 │   │   ├── availabilityService.js  # createAvailabilityRequest, respondToAvailabilityRequest,
 │   │   │                           # subscribeIncomingAvailabilityRequest, cancelAvailabilityRequest
+│   │   ├── analyticsService.js     # 15 typed events (trackSignUp, trackMissionCreated, etc.)
 │   │   ├── adminService.js         # getDashboardStats, getAllUsers, getAllVerifications, suspendUser
 │   │   └── notificationService.js  # configureNotifications, registerForPushNotifications
 │   │
@@ -136,25 +140,40 @@ getrad/
 │       └── dev/
 │           └── SeedDataScreen.js             # Données de démonstration (2 clients, 4 interprètes)
 │
-└── functions/
-    ├── index.js                        # Exports de toutes les Cloud Functions
-    ├── stripe/
-    │   ├── createCheckoutSession.js    # Crée session Stripe Checkout (callable)
-    │   ├── stripeWebhook.js           # Webhook Stripe → mise à jour subscriptions/{uid}
-    │   └── createCustomerPortal.js    # Ouvre portail client Stripe (callable)
-    ├── missions/
-    │   ├── onMissionCreated.js        # Trigger Firestore → filtre disponibilités + tri + 1ère offre
-    │   ├── processOffer.js            # Callable : accepter/refuser, reveal contact, créer conversation
-    │   ├── checkOfferTimeout.js       # Scheduled (1 min) : timeout offres expirées
-    │   └── retryUnmatched.js          # Scheduled (30 min) : relance missions sans match (max 48)
-    ├── bookings/
-    │   ├── onBookingCreated.js              # Notification interprète à la création
-    │   ├── onBookingStatusChanged.js        # Notification client au changement de statut
-    │   ├── onAvailabilityRequestCreated.js  # Notification interprète + timer 2min
-    │   ├── respondToAvailabilityRequest.js  # Callable : accepter/refuser, reveal contact, créer conversation
-    │   └── checkAvailabilityRequestTimeout.js # Scheduled (1 min) : expire demandes pendantes
-    └── notifications/
-        └── sendPush.js                # Envoi notifications Expo Push (via exp.host API)
+├── functions/
+│   ├── index.js                        # Exports de toutes les Cloud Functions
+│   ├── stripe/
+│   │   ├── createCheckoutSession.js    # Crée session Stripe Checkout (callable)
+│   │   ├── stripeWebhook.js           # Webhook Stripe → mise à jour subscriptions/{uid}
+│   │   ├── createCustomerPortal.js    # Ouvre portail client Stripe (callable)
+│   │   └── checkSubscriptionStatus.js # Scheduled (quotidien) : réconciliation Stripe/Firestore
+│   ├── missions/
+│   │   ├── onMissionCreated.js        # Trigger Firestore → filtre disponibilités + tri + 1ère offre
+│   │   ├── processOffer.js            # Callable : accepter/refuser, reveal contact, créer conversation
+│   │   ├── checkOfferTimeout.js       # Scheduled (1 min) : timeout offres expirées
+│   │   ├── retryUnmatched.js          # Scheduled (30 min) : relance missions sans match (max 48)
+│   │   └── suggestAlternatives.js     # Trigger no_match : matching progressif en 3 passes
+│   ├── bookings/
+│   │   ├── onBookingCreated.js              # Notification interprète à la création
+│   │   ├── onBookingStatusChanged.js        # Notification client au changement de statut
+│   │   ├── onAvailabilityRequestCreated.js  # Notification interprète + timer 2min
+│   │   ├── respondToAvailabilityRequest.js  # Callable : accepter/refuser, reveal contact, créer conversation
+│   │   └── checkAvailabilityRequestTimeout.js # Scheduled (1 min) : expire demandes pendantes
+│   └── notifications/
+│       └── sendPush.js                # Envoi notifications Expo Push (via exp.host API)
+│
+└── web/                               # Application web Next.js 15 (App Router)
+    ├── src/app/
+    │   ├── (auth)/login,register      # Auth web (Firebase JS SDK)
+    │   ├── admin/                     # Dashboard, Utilisateurs, Vérifications, Abonnements
+    │   ├── client/                    # Missions (liste, post, suivi), Réservations, Interprètes
+    │   ├── interpreter/               # Dashboard, Réservations, Disponibilités, Abonnement, Vérification
+    │   ├── cgu/                       # CGU (public)
+    │   └── politique-de-confidentialite/ # RGPD (public)
+    ├── src/services/                  # searchService, missionService, bookingService (Firebase JS SDK)
+    ├── src/lib/firebase.js            # Init Firebase + Analytics (SSR-safe)
+    ├── src/lib/analytics.js           # Événements web : trackSignUp, trackMissionCreated, etc.
+    └── src/contexts/AuthContext.jsx   # Auth + rôle + subscription state (SSR-safe)
 ```
 
 ---
@@ -248,10 +267,13 @@ missions/{id}
   clientId, service, languageFrom, languageTo
   date, startTime, endTime, location, budget, description
   status: 'searching'|'offered'|'accepted'|'no_match'|'expired'|'cancelled'
-  assignedTo, offeredTo
+  assignedTo, currentOfferedTo
   offerExpiresAt: Timestamp
+  offerHistory: [{userId, offeredAt, respondedAt, response}]
   retryCount: number
-  createdAt
+  suggestedInterpreters: string[]    // rempli par suggestAlternatives (CF) quand no_match
+  suggestionsGeneratedAt: Timestamp
+  createdAt, updatedAt
 
 bookings/{id}
   clientId, interpreterId
@@ -355,7 +377,11 @@ PostMissionScreen → createMission()
                           └── refusé / timeout → checkOfferTimeout (scheduled 1min)
                                 └── offre au #2, #3...
                                       └── [épuisé] → status: 'no_match'
-                                            └── retryUnmatched (cron 30min, max 48)
+                                            ├── retryUnmatched (cron 30min, max 48)
+                                            └── suggestAlternatives (CF trigger)
+                                                  └── 3 passes : même paire → source → spécialité
+                                                        → top 5 IDs dans mission.suggestedInterpreters
+                                                              → push client + SuggestedProfilesScreen
 ```
 
 ---

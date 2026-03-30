@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../../config/constants';
-import { searchInterpreters } from '../../services/searchService';
+import { searchInterpreters, getInterpretersByIds } from '../../services/searchService';
 
 const AVATAR_COLORS = [
   { bg: '#E0E7FF', text: '#3730A3' },
@@ -43,7 +43,17 @@ const SuggestedProfilesScreen = ({ route, navigation }) => {
   }, []);
 
   const loadSuggested = async () => {
-    // Recherche par critères de la mission
+    // Priorité 1 : IDs calculés par la Cloud Function suggestAlternatives
+    if (mission?.suggestedInterpreters?.length > 0) {
+      const result = await getInterpretersByIds(mission.suggestedInterpreters);
+      if (result.success && result.interpreters.length > 0) {
+        setInterpreters(result.interpreters);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Fallback : recherche générale par critères de la mission
     const result = await searchInterpreters({
       languageFrom: mission?.languageFrom,
       languageTo: mission?.languageTo,
@@ -53,7 +63,6 @@ const SuggestedProfilesScreen = ({ route, navigation }) => {
     });
 
     if (result.success) {
-      // Trier par searchPriority puis rating, prendre les 5 meilleurs
       const sorted = result.interpreters
         .sort((a, b) => {
           if ((b.searchPriority || 1) !== (a.searchPriority || 1))

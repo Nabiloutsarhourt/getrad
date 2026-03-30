@@ -88,3 +88,23 @@ export const getInterpreterById = async (interpreterId) => {
 export const getRecommendedInterpreters = async (limitCount = 6) => {
   return getAllInterpreters({ sortBy: 'rating', limit: limitCount });
 };
+
+export const getInterpretersByIds = async (ids) => {
+  if (!ids || ids.length === 0) return { success: true, interpreters: [] };
+  try {
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        const [interpDoc, userDoc] = await Promise.all([
+          getDoc(doc(db, 'interpreters', id)),
+          getDoc(doc(db, 'users', id)),
+        ]);
+        if (!interpDoc.exists()) return null;
+        return { id: interpDoc.id, ...interpDoc.data(), user: userDoc.exists() ? userDoc.data() : {} };
+      })
+    );
+    return { success: true, interpreters: results.filter(Boolean) };
+  } catch (error) {
+    console.error('Erreur récupération interprètes par IDs:', error);
+    return { success: false, error: error.message, interpreters: [] };
+  }
+};

@@ -15,6 +15,7 @@ import Input from '../../components/Input';
 import Picker from '../../components/Picker';
 import { useAuth } from '../../contexts/AuthContext';
 import { createBooking } from '../../services/bookingService';
+import { trackBookingCreated } from '../../services/analyticsService';
 import { getInterpreterById } from '../../services/searchService';
 
 const BookingFormScreen = ({ route, navigation }) => {
@@ -119,6 +120,7 @@ const BookingFormScreen = ({ route, navigation }) => {
     setSubmitting(false);
 
     if (result.success) {
+      trackBookingCreated(bookingData.serviceType, bookingData.interpreterId);
       Alert.alert(
         'Demande envoyée !',
         'Votre demande de réservation a été envoyée au prestataire. Vous recevrez une réponse prochainement.',

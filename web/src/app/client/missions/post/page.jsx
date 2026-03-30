@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Send } from 'lucide-react';
 import { createMission } from '../../../../services/missionService';
+import { trackMissionCreated } from '../../../../lib/analytics';
 import { useAuth } from '../../../../contexts/AuthContext';
 import Button from '../../../../components/ui/Button';
 import Input from '../../../../components/ui/Input';
@@ -52,6 +53,7 @@ export default function PostMissionPage() {
       };
       const result = await createMission(missionData, user.uid);
       if (result.success) {
+        trackMissionCreated(missionData.serviceType);
         router.push('/client/missions');
       } else {
         setError(result.error || 'Erreur lors de la création de la mission');

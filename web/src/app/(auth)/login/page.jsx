@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginWithEmail } from '../../../services/authService';
+import { trackLogin } from '../../../lib/analytics';
 import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -28,11 +29,8 @@ export default function LoginPage() {
     try {
       const result = await loginWithEmail(email, password);
       if (result.success) {
-        // Wait briefly for AuthContext to populate userData, then redirect
-        // AuthContext onSnapshot will update userData; we redirect based on a short delay
+        trackLogin();
         setTimeout(() => {
-          const role = result.user?.displayName; // fallback if userData not ready
-          // We rely on the home page to redirect based on role
           router.push('/');
         }, 500);
       } else {

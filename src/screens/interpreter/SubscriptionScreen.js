@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { COLORS, SHADOWS } from '../../config/constants';
 import { startCheckout } from '../../services/subscriptionService';
+import { trackSubscriptionStarted } from '../../services/analyticsService';
 
 const PLANS = [
   {
@@ -74,7 +75,9 @@ const SubscriptionScreen = () => {
   const handleSubscribe = async (planId) => {
     setLoadingPlan(planId);
     const result = await startCheckout(planId);
-    if (!result.success) {
+    if (result.success) {
+      trackSubscriptionStarted(planId);
+    } else {
       Alert.alert(
         'Erreur',
         result.error || 'Impossible d\'ouvrir la page de paiement. Réessayez.',

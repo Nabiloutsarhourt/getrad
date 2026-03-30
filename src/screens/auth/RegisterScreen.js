@@ -16,6 +16,7 @@ import { COLORS, USER_ROLES } from '../../config/constants';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { registerWithEmail } from '../../services/authService';
+import { trackSignUp, setUserRole } from '../../services/analyticsService';
 
 const RegisterScreen = ({ navigation }) => {
   const [role, setRole] = useState('client');
@@ -93,6 +94,8 @@ const RegisterScreen = ({ navigation }) => {
     );
     setLoading(false);
     if (result.success) {
+      trackSignUp(role);
+      setUserRole(role);
       Alert.alert('Inscription réussie', 'Votre compte a été créé avec succès.', [{ text: 'OK' }]);
     } else {
       Alert.alert('Erreur d\'inscription', result.error);

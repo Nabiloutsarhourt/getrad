@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Home, Search, Briefcase, MessageSquare, User, LayoutDashboard,
-  Calendar, ShieldCheck, Users, CreditCard, X, CheckSquare
+  Calendar, ShieldCheck, Users, CreditCard, X, CheckSquare, CalendarClock
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/authService';
@@ -20,6 +20,7 @@ const CLIENT_LINKS = [
 const INTERPRETER_LINKS = [
   { href: '/interpreter/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/interpreter/bookings', label: 'Réservations', icon: Calendar },
+  { href: '/interpreter/availability', label: 'Disponibilités', icon: CalendarClock },
   { href: '/interpreter/messages', label: 'Messages', icon: MessageSquare },
   { href: '/interpreter/profile', label: 'Profil', icon: User },
   { href: '/interpreter/subscription', label: 'Abonnement', icon: CreditCard },
@@ -30,6 +31,7 @@ const ADMIN_LINKS = [
   { href: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/admin/verifications', label: 'Vérifications', icon: CheckSquare },
   { href: '/admin/users', label: 'Utilisateurs', icon: Users },
+  { href: '/admin/subscriptions', label: 'Abonnements', icon: CreditCard },
 ];
 
 export default function Navbar({ role, open, onClose }) {

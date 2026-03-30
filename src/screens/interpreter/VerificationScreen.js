@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { submitVerification, uploadVerificationDocument } from '../../services/verificationService';
+import { trackVerificationSubmitted } from '../../services/analyticsService';
 
 const VerificationScreen = ({ existingData }) => {
   const { user, userData } = useAuth();
@@ -64,7 +65,9 @@ const VerificationScreen = ({ existingData }) => {
     const result = await submitVerification(user.uid, form);
     setSubmitting(false);
 
-    if (!result.success) {
+    if (result.success) {
+      trackVerificationSubmitted();
+    } else {
       Alert.alert('Erreur', result.error || 'Impossible de soumettre la demande.');
     }
     // En cas de succès, le listener AuthContext met à jour `verification`

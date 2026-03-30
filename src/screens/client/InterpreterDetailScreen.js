@@ -19,19 +19,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createAvailabilityRequest } from '../../services/availabilityService';
 
 const SPECIALTY_ICONS = {
-  'Juridique':           'scale-outline',
-  'Médical':             'medkit-outline',
-  'Financier':           'trending-up-outline',
-  'Technique':           'construct-outline',
-  'Commercial':          'briefcase-outline',
-  'Conférence':          'mic-outline',
-  'Littéraire':          'book-outline',
-  'Scientifique':        'flask-outline',
-  'Diplomatique':        'globe-outline',
-  'Audiovisuel':         'film-outline',
-  'Marketing':           'megaphone-outline',
-  'IT / Logiciel':       'code-slash-outline',
-  'Tourisme':            'map-outline',
+  'Juridique': 'scale-outline',
+  'Médical': 'medkit-outline',
+  'Financier': 'trending-up-outline',
+  'Technique': 'construct-outline',
+  'Commercial': 'briefcase-outline',
+  'Conférence': 'mic-outline',
+  'Littéraire': 'book-outline',
+  'Scientifique': 'flask-outline',
+  'Diplomatique': 'globe-outline',
+  'Audiovisuel': 'film-outline',
+  'Marketing': 'megaphone-outline',
+  'IT / Logiciel': 'code-slash-outline',
+  'Tourisme': 'map-outline',
   'Éducation / Formation': 'school-outline',
 };
 
@@ -153,10 +153,10 @@ const InterpreterDetailScreen = ({ route, navigation }) => {
     cvURL,
     kbisURL,
     identiteURL,
-    user,
+    user: interpreterUser, // renommé pour éviter conflit
   } = interpreter;
 
-  const photoURL = user?.photoURL;
+  const photoURL = interpreterUser?.photoURL;
   const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   const langCount = languages?.length || 0;
   const avatarColor = getAvatarColor(firstName || 'A');
@@ -349,30 +349,31 @@ const InterpreterDetailScreen = ({ route, navigation }) => {
             reviews.map((review) => {
               const rAv = getAvatarColor(review.clientName || '?');
               return (
-              <View key={review.id} style={styles.reviewCard}>
-                <View style={styles.reviewTop}>
-                  {/* Avatar initials */}
-                  <View style={[styles.reviewAvatar, { backgroundColor: rAv.bg }]}>
-                    <Text style={[styles.reviewAvatarText, { color: rAv.text }]}>
-                      {(review.clientName?.[0] || '?').toUpperCase()}
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewTop}>
+                    {/* Avatar initials */}
+                    <View style={[styles.reviewAvatar, { backgroundColor: rAv.bg }]}>
+                      <Text style={[styles.reviewAvatarText, { color: rAv.text }]}>
+                        {(review.clientName?.[0] || '?').toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.reviewAuthor}>{review.clientName || 'Client'}</Text>
+                      <StarRow rating={review.rating} size={12} />
+                    </View>
+                    <Text style={styles.reviewDate}>
+                      {review.createdAt?.toDate?.()?.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                      }) ?? ''}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewAuthor}>{review.clientName || 'Client'}</Text>
-                    <StarRow rating={review.rating} size={12} />
-                  </View>
-                  <Text style={styles.reviewDate}>
-                    {review.createdAt?.toDate?.()?.toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'short',
-                    }) ?? ''}
-                  </Text>
+                  {review.comment ? (
+                    <Text style={styles.reviewComment}>"{review.comment}"</Text>
+                  ) : null}
                 </View>
-                {review.comment ? (
-                  <Text style={styles.reviewComment}>"{review.comment}"</Text>
-                ) : null}
-              </View>
-            );})
+              );
+            })
           )}
         </View>
       </ScrollView>

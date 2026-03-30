@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../../config/constants';
 import { respondToOffer } from '../../services/missionService';
+import { trackOfferAccepted, trackOfferRefused } from '../../services/analyticsService';
 
 const Detail = ({ iconName, label }) => (
   <View style={detailStyles.row}>
@@ -70,12 +71,14 @@ const IncomingOfferScreen = ({ route, navigation }) => {
     const result = await respondToOffer(mission.id, response);
     if (result.success) {
       if (response === 'accepted') {
+        trackOfferAccepted(mission.id);
         Alert.alert(
           'Mission acceptée',
           'La conversation avec le client a été ouverte. Vos coordonnées ont été partagées.',
           [{ text: 'Voir la conversation', onPress: () => navigation.navigate('MessagesTab') }]
         );
       } else {
+        trackOfferRefused(mission.id);
         navigation.navigate('Home');
       }
     } else {

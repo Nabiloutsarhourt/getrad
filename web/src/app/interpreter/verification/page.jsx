@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Upload, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { submitVerification, uploadVerificationDocument } from '../../../services/verificationService';
+import { trackVerificationSubmitted } from '../../../lib/analytics';
 import Spinner from '../../../components/ui/Spinner';
 
 export default function InterpreterVerificationPage() {
@@ -39,7 +40,10 @@ export default function InterpreterVerificationPage() {
     setSubmitting(true); setError('');
     const result = await submitVerification(user.uid, { ...form, ...uploadedURLs });
     setSubmitting(false);
-    if (result.success) setSuccess(true);
+    if (result.success) {
+      trackVerificationSubmitted();
+      setSuccess(true);
+    }
     else setError(result.error || 'Erreur lors de la soumission.');
   };
 

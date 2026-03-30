@@ -15,6 +15,7 @@ import { COLORS } from '../../config/constants';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import { loginWithEmail } from '../../services/authService';
+import { trackLogin } from '../../services/analyticsService';
 
 const LogoMark = () => (
   <Image
@@ -52,7 +53,9 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
     const result = await loginWithEmail(email.trim(), password);
     setLoading(false);
-    if (!result.success) {
+    if (result.success) {
+      trackLogin();
+    } else {
       Alert.alert('Erreur de connexion', result.error);
     }
   };

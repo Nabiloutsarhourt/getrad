@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Briefcase, Globe, Calendar, MapPin, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { ArrowLeft, Briefcase, Globe, Calendar, MapPin, CheckCircle, XCircle, Loader, Star } from 'lucide-react';
 import { subscribeMission, cancelMission, MISSION_STATUS_LABELS, MISSION_STATUS_TAILWIND } from '../../../../services/missionService';
+import { getInterpretersByIds, getAllInterpreters } from '../../../../services/searchService';
 import Spinner from '../../../../components/ui/Spinner';
 
 const STEPS = [
@@ -19,6 +20,7 @@ export default function MissionTrackingPage() {
   const [mission, setMission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [suggested, setSuggested] = useState([]);
 
   useEffect(() => {
     const unsub = subscribeMission(missionId, (m) => {
@@ -27,6 +29,29 @@ export default function MissionTrackingPage() {
     });
     return () => unsub();
   }, [missionId]);
+
+  // Load suggested interpreters when status becomes no_match
+  useEffect(() => {
+    if (!mission || mission.status !== 'no_match') return;
+    const load = async () => {
+      if (mission.suggestedInterpreters?.length > 0) {
+        const result = await getInterpretersByIds(mission.suggestedInterpreters);
+        if (result.success && result.interpreters.length > 0) {
+          setSuggested(result.interpreters);
+          return;
+        }
+      }
+      // Fallback: search by language pair
+      const result = await getAllInterpreters({
+        languageFrom: mission.languageFrom,
+        languageTo: mission.languageTo,
+        sortBy: 'rating',
+        limit: 5,
+      });
+      if (result.success) setSuggested(result.interpreters.slice(0, 5));
+    };
+    load();
+  }, [mission?.status, mission?.suggestedInterpreters]);
 
   const handleCancel = async () => {
     if (!confirm('Voulez-vous annuler cette mission ?')) return;
@@ -159,6 +184,56 @@ export default function MissionTrackingPage() {
               </Link>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Suggested interpreters on no_match */}
+      {mission.status === 'no_match' && suggested.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-card p-5 space-y-4">
+          <h3 className="font-semibold text-[#191c1d]">Profils correspondants</h3>
+          <p className="text-sm text-[#737686]">Ces prestataires correspondent à vos critères et sont disponibles.</p>
+          <div className="space-y-3">
+            {suggested.map((interp) => {
+              const initials = `${interp.firstName?.charAt(0) || ''}${interp.lastName?.charAt(0) || ''}`.toUpperCase() || '?';
+              const langPair = interp.languages?.[0];
+              return (
+                <Link
+                  key={interp.id}
+                  href={`/client/interpreters/${interp.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-[#e7e8e9] hover:border-[#004ac6] hover:bg-[#f5f6ff] transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#dbe1ff] flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-[#3730a3]">{initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[#191c1d] truncate">
+                      {interp.firstName} {interp.lastName}
+                      {interp.assermente && (
+                        <span className="ml-1.5 text-xs font-medium text-[#006c49] bg-[#d1fae5] px-1.5 py-0.5 rounded-full">Assermenté</span>
+                      )}
+                    </p>
+                    {langPair && (
+                      <p className="text-xs text-[#737686] truncate">{langPair.source} → {langPair.target}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    {interp.rating > 0 && (
+                      <div className="flex items-center gap-1 justify-end">
+                        <Star size={11} className="text-[#f59e0b] fill-[#f59e0b]" />
+                        <span className="text-xs font-semibold text-[#191c1d]">{interp.rating.toFixed(1)}</span>
+                      </div>
+                    )}
+                    {interp.hourlyRate && (
+                      <p className="text-xs font-bold text-[#004ac6] mt-0.5">{interp.hourlyRate}€/h</p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          <Link href="/client/interpreters" className="block text-center text-sm font-semibold text-[#004ac6] hover:underline pt-1">
+            Voir tous les prestataires →
+          </Link>
         </div>
       )}
 

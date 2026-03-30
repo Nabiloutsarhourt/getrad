@@ -8,6 +8,7 @@ import {
 import { COLORS, SHADOWS } from '../../config/constants';
 import { useAuth } from '../../contexts/AuthContext';
 import { createMission } from '../../services/missionService';
+import { trackMissionCreated } from '../../services/analyticsService';
 
 const SERVICES = [
   { id: 'interpretation_simultanee',  label: 'Interprétation simultanée',             icon: 'headset-outline' },
@@ -73,6 +74,7 @@ const PostMissionScreen = ({ navigation }) => {
     }, user.uid);
 
     if (result.success) {
+      trackMissionCreated(form.serviceType, `${form.sourceLanguage}-${form.targetLanguage}`);
       navigation.replace('MissionTracking', { missionId: result.missionId });
     } else {
       Alert.alert('Erreur', result.error || 'Impossible de publier la mission.');

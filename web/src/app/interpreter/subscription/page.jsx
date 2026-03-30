@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Check, ExternalLink, Zap } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { startCheckout, openCustomerPortal, PLAN_LABELS, PLAN_FEATURES } from '../../../services/subscriptionService';
+import { trackSubscriptionStarted, trackSubscriptionManaged } from '../../../lib/analytics';
 import Spinner from '../../../components/ui/Spinner';
 
 const PLANS = ['discovery', 'professional', 'premium'];
@@ -17,12 +18,14 @@ export default function InterpreterSubscriptionPage() {
 
   const handleCheckout = async (plan) => {
     setLoadingPlan(plan);
+    trackSubscriptionStarted(plan);
     await startCheckout(plan);
     setLoadingPlan(null);
   };
 
   const handlePortal = async () => {
     setOpeningPortal(true);
+    trackSubscriptionManaged();
     await openCustomerPortal();
     setOpeningPortal(false);
   };

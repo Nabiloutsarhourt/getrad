@@ -212,9 +212,11 @@ export default function LandingPage() {
             <p className="text-sm text-gray-400">
               &copy; {new Date().getFullYear()} GETRAD. Tous droits réservés.
             </p>
-            <div className="flex gap-4 text-sm text-gray-400">
+            <div className="flex gap-4 text-sm text-gray-400 flex-wrap justify-center">
               <Link href="/login" className="hover:text-white transition-colors">Connexion</Link>
               <Link href="/register" className="hover:text-white transition-colors">Inscription</Link>
+              <Link href="/cgu" className="hover:text-white transition-colors">CGU</Link>
+              <Link href="/politique-de-confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
             </div>
           </div>
         </div>
